@@ -1,7 +1,7 @@
 const httpstate = {
-    FAILED: "Failed",
-    SUCCESS: "Success",
-    ERROR: "Error"
+    FAILED: "failed",
+    SUCCESS: "success",
+    ERROR: "error"
 } 
 
 module.exports = httpstate;
