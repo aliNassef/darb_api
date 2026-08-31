@@ -104,4 +104,13 @@ const sendOtp = async ({ phoneNumber, powSolution, endUserIp }) => {
     });
 };
 
-module.exports = { getChallenge, sendOtp, normalizeIp };
+// Verify needs no APIKey/pipelineID/PoW — possession of the transaction ID is
+// what authenticates the call.
+const verifyOtp = async ({ transactionReqID, otp }) =>
+    request('/transactions/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionReqID, otp }),
+    });
+
+module.exports = { getChallenge, sendOtp, verifyOtp, normalizeIp };
