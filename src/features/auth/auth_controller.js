@@ -53,8 +53,6 @@ const verifyOtp = asyncWrapper(async (req, res) => {
 
     const { status, body } = await akedly.verifyOtp({ transactionReqID, otp });
 
-    // Forwarding Akedly's status gives 403 INVALID_OTP, 410 TRANSACTION_EXPIRED
-    // and 429 MAX_ATTEMPTS_EXCEEDED without a lookup table.
     if (status < 200 || status >= 300) {
         return res.status(status).json({
             status: httpstate.ERROR,
