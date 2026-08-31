@@ -4,18 +4,14 @@ const { solveChallenge } = require('../../utils/pow');
 const { validatePhoneNumber } = require('./auth_validator');
 const appError = require('../../error/app_error');
 const asyncWrapper = require('../../middleware/async_wrapper');
-// No global error middleware is registered, so every path out of this handler
-// must terminate the response itself.
-const sendOtp = asyncWrapper(async (req, res, next) => {
 
+const sendOtp = asyncWrapper(async (req, res) => {
+    console.log(req.body.phoneNumber);
     const phoneNumber = validatePhoneNumber(req.body?.phoneNumber);
 
     const challenge = await akedly.getChallenge();
 
-    if (challenge.turnstile?.required === true) {
-        const err = appError.create('there is something wrong', 501, httpstate.ERROR);
-        next(err);
-    }
+
 
     const powSolution = challenge.challengeRequired === false
         ? undefined
@@ -29,6 +25,7 @@ const sendOtp = asyncWrapper(async (req, res, next) => {
         powSolution,
         endUserIp: akedly.normalizeIp(req.ip),
     });
+
 
     if (status < 200 || status >= 300) {
         return res.status(status).json({

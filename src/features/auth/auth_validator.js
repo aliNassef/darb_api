@@ -1,10 +1,10 @@
 const appError = require('../../error/app_error');
-const httpState = require('../../utils/http_state');
+const httpstate = require('../../utils/http_state');
+
+// E.164: a leading '+', a non-zero country digit, then 7-14 more digits.
 const E164 = /^\+[1-9]\d{7,14}$/;
 
-const badRequest = (message) => {
-    const err = appError.create(message, 400, httpState.FAILED);
-};
+const badRequest = (message) => appError.create(message, 400, httpstate.FAILED);
 
 const validatePhoneNumber = (value) => {
     if (value === undefined || value === null || value === '') {

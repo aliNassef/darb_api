@@ -1,14 +1,7 @@
 const env = require('../config/env');
+const appError = require('../error/app_error');
+const httpstate = require('../utils/http_state');
 
-const upstreamError = (message, statusCode = 502) => {
-    const err = new Error(message);
-    err.statusCode = statusCode;
-    return err;
-};
-
-// Akedly only wants a routable end-user IP for its per-IP rate limiting. Sending
-// `::1` or a LAN address for every request would collapse all callers into a
-// single bucket, so those are dropped and the header is omitted instead.
 const normalizeIp = (ip) => {
     if (typeof ip !== 'string' || ip.length === 0) return null;
 
@@ -26,9 +19,9 @@ const normalizeIp = (ip) => {
     return address;
 };
 
+
 const request = async (path, { method = 'GET', headers = {}, body } = {}) => {
     let response;
-
     try {
         response = await fetch(`${env.akedlyBaseUrl}${path}`, {
             method,
@@ -38,9 +31,13 @@ const request = async (path, { method = 'GET', headers = {}, body } = {}) => {
         });
     } catch (err) {
         if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-            throw upstreamError(`Akedly did not respond within ${env.akedlyTimeoutMs}ms.`, 504);
+            throw appError.create(
+                `Akedly did not respond within ${env.akedlyTimeoutMs}ms.`,
+                504,
+                httpstate.ERROR
+            );
         }
-        throw upstreamError(`Could not reach Akedly: ${err.message}`);
+        throw appError.create(`Could not reach Akedly: ${err.message}`, 502, httpstate.ERROR);
     }
 
     const text = await response.text();
@@ -49,7 +46,11 @@ const request = async (path, { method = 'GET', headers = {}, body } = {}) => {
     try {
         parsed = text.length > 0 ? JSON.parse(text) : {};
     } catch {
-        throw upstreamError(`Akedly returned a non-JSON response (HTTP ${response.status}).`);
+        throw appError.create(
+            `Akedly returned a non-JSON response (HTTP ${response.status}).`,
+            502,
+            httpstate.ERROR
+        );
     }
 
     return { status: response.status, body: parsed };
@@ -64,14 +65,16 @@ const getChallenge = async () => {
     const { status, body } = await request(`/transactions/challenge?${query}`);
 
     if (status < 200 || status >= 300) {
-        throw upstreamError(
+        throw appError.create(
             `Akedly rejected the challenge request (HTTP ${status})` +
-            `${body?.message ? `: ${body.message}` : ''}.`
+            `${body?.message ? `: ${body.message}` : ''}.`,
+            502,
+            httpstate.ERROR
         );
     }
 
     if (!body?.data) {
-        throw upstreamError('Akedly returned a challenge response with no data.');
+        throw appError.create('Akedly returned a challenge response with no data.', 502, httpstate.ERROR);
     }
 
     return body.data;
