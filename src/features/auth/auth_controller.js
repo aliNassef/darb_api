@@ -6,7 +6,7 @@ const appError = require('../../error/app_error');
 const asyncWrapper = require('../../middleware/async_wrapper');
 
 const sendOtp = asyncWrapper(async (req, res) => {
-    console.log(req.body.phoneNumber);
+    console.log(req.body);
     const phoneNumber = validatePhoneNumber(req.body?.phoneNumber);
 
     const challenge = await akedly.getChallenge();

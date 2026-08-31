@@ -1,4 +1,6 @@
-require('dotenv').config();
+// override: .env is the source of truth for this app, so a stale shell export
+// (e.g. a leftover AKEDLY_PIPELINE_ID) cannot silently shadow it.
+require('dotenv').config({ override: true });
 
 const appError = require('../error/app_error');
 const httpstate = require('../utils/http_state');
